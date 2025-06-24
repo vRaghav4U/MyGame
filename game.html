@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RA Tic Tac Toe</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 25%, #FFD23F 50%, #06FFA5 75%, #4ECDC4 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 
+                4px 4px 8px rgba(0,0,0,0.9),
+                0 0 20px rgba(255,255,255,0.5),
+                0 0 40px rgba(255,255,255,0.3);
+            margin-bottom: 25px;
+            letter-spacing: 8px;
+            border: 4px solid #fff;
+            border-radius: 20px;
+            padding: 15px 30px;
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.4),
+                inset 0 2px 0 rgba(255,255,255,0.3);
+            background: linear-gradient(135deg, 
+                rgba(255,23,68,0.9) 0%, 
+                rgba(255,152,0,0.9) 33%, 
+                rgba(255,235,59,0.9) 66%, 
+                rgba(76,175,80,0.9) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                transparent, 
+                rgba(255,255,255,0.1), 
+                transparent);
+            animation: logoShine 3s infinite;
+        }
+
+        @keyframes logoShine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+            100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        }
+
+        .challenge-text {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .challenge-text h2 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 
+                3px 3px 6px rgba(0,0,0,0.8),
+                0 0 15px rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.1);
+            padding: 12px 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255,255,255,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .challenge-text p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .raghav-avatar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4ECDC4, #06FFA5);
+            border: 4px solid #fff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            z-index: 100;
+            animation: avatarBounce 0.5s ease-in-out;
+            background-image: url('/static/images/raghav.png');
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+        }
+
+        .raghav-avatar .placeholder-text {
+            display: none;
+        }
+
+        .raghav-avatar.thinking {
+            display: flex;
+            animation: thinking 1s ease-in-out infinite;
+        }
+
+        .raghav-avatar.winning {
+            display: flex;
+            animation: celebration 1s ease-in-out infinite;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+        }
+
+        @keyframes avatarBounce {
+            0% { transform: scale(0) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+
+        @keyframes thinking {
+            0%, 100% { transform: scale(1) rotate(-5deg); }
+            50% { transform: scale(1.05) rotate(5deg); }
+        }
+
+        @keyframes celebration {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-10deg); }
+            75% { transform: scale(1.1) rotate(10deg); }
+        }
+
+        .speech-bubble {
+            position: fixed;
+            top: 150px;
+            right: 30px;
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 99;
+            max-width: 200px;
+            text-align: center;
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: 40px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid rgba(255,255,255,0.95);
+        }
+
+        .speech-bubble.show {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.3);
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+        }
+
+
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 12px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, rgba(255,107,53,0.3), rgba(78,205,196,0.3));
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .cell:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.2));
+            transform: scale(1.08);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .cell:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .cell.x {
+            color: #FF1744;
+            text-shadow: 
+                4px 4px 8px rgba(0,0,0,0.9),
+                0 0 15px rgba(255,23,68,0.6),
+                0 0 30px rgba(255,23,68,0.3);
+            background: linear-gradient(135deg, rgba(255,23,68,0.3), rgba(255,23,68,0.1));
+            border-color: rgba(255,23,68,0.5);
+        }
+
+        .cell.o {
+            color: #00E676;
+            text-shadow: 
+                4px 4px 8px rgba(0,0,0,0.9),
+                0 0 15px rgba(0,230,118,0.6),
+                0 0 30px rgba(0,230,118,0.3);
+            background: linear-gradient(135deg, rgba(0,230,118,0.3), rgba(0,230,118,0.1));
+            border-color: rgba(0,230,118,0.5);
+        }
+
+        .game-info {
+            text-align: center;
+            color: #fff;
+            margin: 20px 0;
+        }
+
+        .current-player {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 
+                2px 2px 4px rgba(0,0,0,0.8),
+                0 0 10px rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 15px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .score {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 1rem;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.3);
+            padding: 3px 8px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 900;
+            text-shadow: 
+                3px 3px 6px rgba(0,0,0,0.8),
+                0 0 15px rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 900;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 
+                2px 2px 4px rgba(0,0,0,0.8),
+                0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            border-color: #FF6B35;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #06FFA5, #4ECDC4);
+            border-color: #06FFA5;
+        }
+
+        .winner-animation {
+            animation: celebration 0.6s ease-in-out;
+        }
+
+        @keyframes celebration {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .game-over {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .game-over h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-shadow: 
+                3px 3px 6px rgba(0,0,0,0.8),
+                0 0 20px rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 2.5rem;
+                letter-spacing: 3px;
+            }
+            
+            .game-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .cell {
+                font-size: 1.5rem;
+                min-height: 60px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">RAGS</div>
+    
+    <div class="challenge-text">
+        <h2>🎯 Think You Can Beat Raghav? 🎯</h2>
+        <p>Challenge the AI and prove your tic-tac-toe skills!</p>
+    </div>
+    
+    <div class="game-container">
+        <div class="game-info">
+            <div class="current-player" id="currentPlayer">Your Turn</div>
+            
+            <div class="score">
+                <div class="score-item">
+                    <div class="score-label">You</div>
+                    <div class="score-value" id="scoreX">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Draws</div>
+                    <div class="score-value" id="scoreDraw">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Raghav AI</div>
+                    <div class="score-value" id="scoreO">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <button class="cell" data-index="0"></button>
+            <button class="cell" data-index="1"></button>
+            <button class="cell" data-index="2"></button>
+            <button class="cell" data-index="3"></button>
+            <button class="cell" data-index="4"></button>
+            <button class="cell" data-index="5"></button>
+            <button class="cell" data-index="6"></button>
+            <button class="cell" data-index="7"></button>
+            <button class="cell" data-index="8"></button>
+        </div>
+
+        <div class="game-over" id="gameOver" style="display: none;">
+            <h3 id="gameResult"></h3>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="resetGame()">New Game</button>
+            <button class="btn btn-secondary" onclick="resetScore()">Reset Score</button>
+        </div>
+
+        <!-- Raghav Avatar -->
+        <div class="raghav-avatar" id="raghavsAvatar">
+            <div class="placeholder-text">R</div>
+        </div>
+
+        <!-- Speech Bubble -->
+        <div class="speech-bubble" id="speechBubble">
+            Thinking...
+        </div>
+
+    </div>
+
+    <script>
+        class TicTacToe {
+            constructor() {
+                this.board = Array(9).fill('');
+                this.humanPlayer = 'X';
+                this.aiPlayer = 'O';
+                this.currentPlayer = 'X';
+                this.gameActive = true;
+                this.isAiTurn = false;
+                this.scores = {
+                    X: 0,
+                    O: 0,
+                    draw: 0
+                };
+                
+                this.winningCombinations = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                    [0, 4, 8], [2, 4, 6] // diagonals
+                ];
+                
+                this.thinkingMessages = [
+                    'Let me think... 🤔',
+                    'Analyzing the board... 🧠',
+                    'Planning my move... ⚡',
+                    'Calculating possibilities... 🔢',
+                    'This is interesting... 🤓',
+                    'Hmm, what should I do? 💭',
+                    'Time to strategize... 🎯',
+                    'Looking for the best move... 👀',
+                    'Processing options... ⚙️',
+                    'Let me outsmart you! 😏'
+                ];
+                
+                this.winningMessages = [
+                    'I won! 😎',
+                    'Victory is mine! 🏆',
+                    'Too easy! 😄',
+                    'Better luck next time! 🎉',
+                    'I\'m the champion! 👑',
+                    'Gotcha! 😁',
+                    'Perfect strategy! ✨',
+                    'Checkmate... wait, wrong game! 😂'
+                ];
+                
+                this.init();
+                this.loadScores();
+            }
+            
+            init() {
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.addEventListener('click', (e) => this.handleCellClick(e));
+                });
+                this.updateDisplay();
+            }
+            
+            handleCellClick(e) {
+                const index = parseInt(e.target.dataset.index);
+                
+                if (this.board[index] !== '' || !this.gameActive || this.isAiTurn) {
+                    return;
+                }
+                
+                // Human move
+                this.makeMove(index, this.humanPlayer);
+                
+                if (this.gameActive) {
+                    this.isAiTurn = true;
+                    this.updateDisplay();
+                    
+                    // AI move after a short delay
+                    setTimeout(() => {
+                        this.makeAiMove();
+                    }, 800);
+                }
+            }
+            
+            makeMove(index, player) {
+                this.board[index] = player;
+                const cell = document.querySelector(`[data-index="${index}"]`);
+                cell.textContent = player;
+                cell.classList.add(player.toLowerCase());
+                cell.disabled = true;
+                
+                this.checkWinner();
+            }
+            
+            makeAiMove() {
+                if (!this.gameActive) return;
+                
+                const bestMove = this.getBestMove();
+                if (bestMove !== -1) {
+                    this.makeMove(bestMove, this.aiPlayer);
+                }
+                
+                this.isAiTurn = false;
+                this.updateDisplay();
+            }
+            
+            getBestMove() {
+                // AI Strategy: Easy to Medium difficulty
+                
+                // 1. Try to win
+                let move = this.findWinningMove(this.aiPlayer);
+                if (move !== -1) return move;
+                
+                // 2. Block human from winning
+                move = this.findWinningMove(this.humanPlayer);
+                if (move !== -1) return move;
+                
+                // 3. Take center if available
+                if (this.board[4] === '') return 4;
+                
+                // 4. Take corners
+                const corners = [0, 2, 6, 8];
+                const availableCorners = corners.filter(corner => this.board[corner] === '');
+                if (availableCorners.length > 0) {
+                    return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                }
+                
+                // 5. Take any available space
+                const availableMoves = this.board.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+                return availableMoves.length > 0 ? availableMoves[Math.floor(Math.random() * availableMoves.length)] : -1;
+            }
+            
+            findWinningMove(player) {
+                for (let combination of this.winningCombinations) {
+                    const [a, b, c] = combination;
+                    const line = [this.board[a], this.board[b], this.board[c]];
+                    
+                    if (line.filter(cell => cell === player).length === 2 && line.includes('')) {
+                        if (this.board[a] === '') return a;
+                        if (this.board[b] === '') return b;
+                        if (this.board[c] === '') return c;
+                    }
+                }
+                return -1;
+            }
+            
+            checkWinner() {
+                let winner = null;
+                
+                for (let combination of this.winningCombinations) {
+                    const [a, b, c] = combination;
+                    if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) {
+                        winner = this.board[a];
+                        this.highlightWinningCells(combination);
+                        break;
+                    }
+                }
+                
+                if (winner) {
+                    this.gameActive = false;
+                    this.scores[winner]++;
+                    this.showGameResult(`Player ${winner} Wins! 🎉`);
+                    this.saveScores();
+                } else if (!this.board.includes('')) {
+                    this.gameActive = false;
+                    this.scores.draw++;
+                    this.showGameResult("It's a Draw! 🤝");
+                    this.saveScores();
+                }
+                
+                this.updateScoreDisplay();
+            }
+            
+            highlightWinningCells(combination) {
+                const cells = document.querySelectorAll('.cell');
+                combination.forEach(index => {
+                    cells[index].classList.add('winner-animation');
+                });
+            }
+            
+            showGameResult(message) {
+                const gameOver = document.getElementById('gameOver');
+                const gameResult = document.getElementById('gameResult');
+                
+                // Customize messages for AI vs Human
+                if (message.includes('Player X Wins')) {
+                    gameResult.textContent = '🎉 Amazing! You Beat Raghav! 🎉';
+                    // Show Raghav with sad/disappointed expression when user wins
+                    this.showRaghavsAvatar('thinking', 'Well played! 😔');
+                } else if (message.includes('Player O Wins')) {
+                    gameResult.textContent = '🤖 Raghav Wins! Try Again? 🤖';
+                    const randomWinMessage = this.winningMessages[Math.floor(Math.random() * this.winningMessages.length)];
+                    this.showRaghavsAvatar('winning', randomWinMessage);
+                } else {
+                    gameResult.textContent = '🤝 It\'s a Draw! Well Played! 🤝';
+                    this.showRaghavsAvatar('thinking', 'Good game!');
+                }
+                
+                gameOver.style.display = 'block';
+                
+                // Disable all cells
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.disabled = true;
+                });
+                
+                document.getElementById('currentPlayer').textContent = 'Game Over';
+            }
+            
+            updateDisplay() {
+                if (this.gameActive) {
+                    if (this.isAiTurn) {
+                        document.getElementById('currentPlayer').textContent = '🤔 Raghav is thinking...';
+                        const randomMessage = this.thinkingMessages[Math.floor(Math.random() * this.thinkingMessages.length)];
+                        this.showRaghavsAvatar('thinking', randomMessage);
+                    } else {
+                        document.getElementById('currentPlayer').textContent = '🎯 Your Turn - Make Your Move!';
+                        this.hideRaghavsAvatar();
+                    }
+                }
+            }
+            
+            showRaghavsAvatar(state, message) {
+                const avatar = document.getElementById('raghavsAvatar');
+                const bubble = document.getElementById('speechBubble');
+                
+                // Set the background image explicitly
+                avatar.style.backgroundImage = 'url(/static/images/raghav.png)';
+                avatar.style.backgroundSize = 'cover';
+                avatar.style.backgroundPosition = 'center';
+                avatar.style.backgroundRepeat = 'no-repeat';
+                
+                avatar.className = `raghav-avatar ${state}`;
+                bubble.textContent = message;
+                bubble.className = 'speech-bubble show';
+            }
+            
+            hideRaghavsAvatar() {
+                const avatar = document.getElementById('raghavsAvatar');
+                const bubble = document.getElementById('speechBubble');
+                
+                avatar.className = 'raghav-avatar';
+                bubble.className = 'speech-bubble';
+            }
+            
+            updateScoreDisplay() {
+                document.getElementById('scoreX').textContent = this.scores.X;
+                document.getElementById('scoreO').textContent = this.scores.O;
+                document.getElementById('scoreDraw').textContent = this.scores.draw;
+            }
+            
+            resetGame() {
+                this.board = Array(9).fill('');
+                this.currentPlayer = 'X';
+                this.gameActive = true;
+                this.isAiTurn = false;
+                
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.disabled = false;
+                    cell.classList.remove('x', 'o', 'winner-animation');
+                });
+                
+                document.getElementById('gameOver').style.display = 'none';
+                this.hideRaghavsAvatar();
+                this.updateDisplay();
+            }
+            
+            resetScore() {
+                this.scores = { X: 0, O: 0, draw: 0 };
+                this.updateScoreDisplay();
+                this.saveScores();
+                this.resetGame();
+            }
+            
+            saveScores() {
+                localStorage.setItem('ticTacToeScores', JSON.stringify(this.scores));
+            }
+            
+            loadScores() {
+                const savedScores = localStorage.getItem('ticTacToeScores');
+                if (savedScores) {
+                    this.scores = JSON.parse(savedScores);
+                }
+                this.updateScoreDisplay();
+            }
+        }
+        
+        // Initialize the game
+        const game = new TicTacToe();
+        
+        // Global functions for buttons
+        function resetGame() {
+            game.resetGame();
+        }
+        
+        function resetScore() {
+            game.resetScore();
+        }
+        
+        // Add touch event handling for better mobile experience
+        document.addEventListener('touchstart', function() {}, { passive: true });
+        
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Add service worker for PWA capabilities
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - API Pagination Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Dashboard
+        </h1>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-white-50">Active Configs</h6>
+                        <h3 class="text-white">{{ configs|length }}</h3>
+                    </div>
+                    <i class="fas fa-cog fa-2x text-white-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-white-50">Total Responses</h6>
+                        <h3 class="text-white">{{ recent_responses|length }}</h3>
+                    </div>
+                    <i class="fas fa-database fa-2x text-white-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-white-50">Recent Jobs</h6>
+                        <h3 class="text-white">{{ recent_jobs|length }}</h3>
+                    </div>
+                    <i class="fas fa-sync fa-2x text-white-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-dark-50">Running Jobs</h6>
+                        <h3 class="text-dark">{{ recent_jobs|selectattr('status', 'equalto', 'running')|list|length }}</h3>
+                    </div>
+                    <i class="fas fa-spinner fa-2x text-dark-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Configurations -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>
+                    API Configurations
+                </h5>
+                <a href="{{ url_for('api_config.create_config') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>Add New Config
+                </a>
+            </div>
+            <div class="card-body">
+                {% if configs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Base URL</th>
+                                    <th>Pagination Type</th>
+                                    <th>Max Pages</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for config in configs %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ config.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ config.base_url[:50] }}{% if config.base_url|length > 50 %}...{% endif %}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ config.pagination_type }}</span>
+                                    </td>
+                                    <td>{{ config.max_pages }}</td>
+                                    <td>
+                                        {% if config.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if config.is_active %}
+                                            <form method="POST" action="{{ url_for('main.start_collection', config_id=config.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-success btn-sm" 
+                                                        {% if recent_jobs|selectattr('config_id', 'equalto', config.id)|selectattr('status', 'equalto', 'running')|list %}disabled{% endif %}>
+                                                    <i class="fas fa-play me-1"></i>Start
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        <a href="{{ url_for('api_config.edit_config', config_id=config.id) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-cog fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No API configurations found</h5>
+                        <p class="text-muted">Create your first API configuration to get started.</p>
+                        <a href="{{ url_for('api_config.create_config') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Create API Config
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Jobs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Collection Jobs
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_jobs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Config</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                    <th>Started</th>
+                                    <th>Duration</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in recent_jobs %}
+                                <tr>
+                                    <td>{{ job.config.name if job.config else 'Unknown' }}</td>
+                                    <td>
+                                        {% if job.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif job.status == 'running' %}
+                                            <span class="badge bg-primary">Running</span>
+                                        {% elif job.status == 'failed' %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% elif job.status == 'cancelled' %}
+                                            <span class="badge bg-warning">Cancelled</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ job.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if job.total_pages > 0 %}
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ job.progress_percentage }}%"
+                                                     aria-valuenow="{{ job.progress_percentage }}" 
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    {{ "%.1f"|format(job.progress_percentage) }}%
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">{{ job.completed_pages }}/{{ job.total_pages }} pages</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ job.start_time.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        {% if job.end_time %}
+                                            {% set duration = job.end_time - job.start_time %}
+                                            <small>{{ duration.total_seconds()|int }}s</small>
+                                        {% elif job.status == 'running' %}
+                                            <small class="text-primary">Running...</small>
+                                        {% else %}
+                                            <small class="text-muted">-</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if job.status == 'running' %}
+                                            <form method="POST" action="{{ url_for('main.cancel_job', job_id=job.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-stop me-1"></i>Cancel
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        {% if job.error_message %}
+                                            <button class="btn btn-outline-warning btn-sm" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="{{ job.error_message }}">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No collection jobs found</h5>
+                        <p class="text-muted">Start your first API data collection to see job history here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Auto-refresh running jobs
+setInterval(function() {
+    const runningJobs = document.querySelectorAll('.badge.bg-primary');
+    if (runningJobs.length > 0) {
+        location.reload();
+    }
+}, 10000); // Refresh every 10 seconds if there are running jobs
+</script>
+{% endblock %}

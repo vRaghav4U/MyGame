@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if create_mode %}Create API Config{% elif edit_mode %}Edit API Config{% else %}API Configurations{% endif %} - API Pagination Manager
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-cog me-2"></i>
+                {% if create_mode %}
+                    Create API Configuration
+                {% elif edit_mode %}
+                    Edit API Configuration
+                {% else %}
+                    API Configurations
+                {% endif %}
+            </h1>
+            {% if not create_mode and not edit_mode %}
+                <a href="{{ url_for('api_config.create_config') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Add New Config
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if create_mode or edit_mode %}
+<!-- Create/Edit Form -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    {% if create_mode %}New Configuration{% else %}Edit Configuration{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Configuration Name</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ config.name if config else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="base_url" class="form-label">Base URL</label>
+                            <input type="url" class="form-control" id="base_url" name="base_url" 
+                                   value="{{ config.base_url if config else '' }}" required
+                                   placeholder="https://api.example.com/v1/data">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="pagination_type" class="form-label">Pagination Type</label>
+                            <select class="form-select" id="pagination_type" name="pagination_type" required>
+                                <option value="page" {% if config and config.pagination_type == 'page' %}selected{% endif %}>Page Number</option>
+                                <option value="offset" {% if config and config.pagination_type == 'offset' %}selected{% endif %}>Offset/Limit</option>
+                                <option value="cursor" {% if config and config.pagination_type == 'cursor' %}selected{% endif %}>Cursor Based</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="max_pages" class="form-label">Max Pages</label>
+                            <input type="number" class="form-control" id="max_pages" name="max_pages" 
+                                   value="{{ config.max_pages if config else 100 }}" min="1" max="10000">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="rate_limit_delay" class="form-label">Rate Limit Delay (seconds)</label>
+                            <input type="number" step="0.1" class="form-control" id="rate_limit_delay" name="rate_limit_delay" 
+                                   value="{{ config.rate_limit_delay if config else 1.0 }}" min="0" max="60">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="headers" class="form-label">Request Headers (JSON)</label>
+                        <textarea class="form-control" id="headers" name="headers" rows="4" 
+                                  placeholder='{"Authorization": "Bearer your-token", "Content-Type": "application/json"}'>{{ config.headers_json if config and config.headers_json else '' }}</textarea>
+                        <div class="form-text">Enter HTTP headers as JSON. Leave empty if no headers are needed.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="pagination_params" class="form-label">Pagination Parameters (JSON)</label>
+                        <textarea class="form-control" id="pagination_params" name="pagination_params" rows="6"
+                                  placeholder='{"page_param": "page", "page_size_param": "per_page", "page_size": 20}'>{{ config.pagination_params_json if config and config.pagination_params_json else '' }}</textarea>
+                        <div class="form-text">
+                            Configure pagination parameters based on your chosen type:
+                            <br><strong>Page:</strong> {"page_param": "page", "page_size_param": "per_page", "page_size": 20}
+                            <br><strong>Offset:</strong> {"offset_param": "offset", "limit_param": "limit", "limit": 20}
+                            <br><strong>Cursor:</strong> {"cursor_param": "cursor", "cursor_field": "next_cursor", "page_size": 20}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                   {% if not config or config.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Active Configuration
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if create_mode %}Create Configuration{% else %}Update Configuration{% endif %}
+                        </button>
+                        <a href="{{ url_for('api_config.list_configs') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Configuration Help
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6>Pagination Types:</h6>
+                <ul class="small">
+                    <li><strong>Page Number:</strong> Uses page/per_page parameters</li>
+                    <li><strong>Offset/Limit:</strong> Uses offset/limit parameters</li>
+                    <li><strong>Cursor Based:</strong> Uses cursor tokens for pagination</li>
+                </ul>
+                
+                <h6 class="mt-3">Common Headers:</h6>
+                <ul class="small">
+                    <li>Authorization: Bearer token</li>
+                    <li>API-Key: your-api-key</li>
+                    <li>Content-Type: application/json</li>
+                </ul>
+                
+                <h6 class="mt-3">Rate Limiting:</h6>
+                <p class="small">Set delay between requests to respect API rate limits. Start with 1 second and adjust based on API documentation.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- List View -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if configs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Base URL</th>
+                                    <th>Type</th>
+                                    <th>Max Pages</th>
+                                    <th>Rate Limit</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for config in configs %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ config.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ config.base_url[:40] }}{% if config.base_url|length > 40 %}...{% endif %}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ config.pagination_type }}</span>
+                                    </td>
+                                    <td>{{ config.max_pages }}</td>
+                                    <td>{{ config.rate_limit_delay }}s</td>
+                                    <td>
+                                        {% if config.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ config.created_at.strftime('%Y-%m-%d') }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('api_config.edit_config', config_id=config.id) }}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="POST" action="{{ url_for('api_config.toggle_config', config_id=config.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-warning">
+                                                    {% if config.is_active %}
+                                                        <i class="fas fa-pause"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-play"></i>
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('api_config.delete_config', config_id=config.id) }}" 
+                                                  class="d-inline" onsubmit="return confirm('Are you sure you want to delete this configuration?')">
+                                                <button type="submit" class="btn btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-cog fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No API configurations found</h4>
+                        <p class="text-muted">Create your first API configuration to start collecting data.</p>
+                        <a href="{{ url_for('api_config.create_config') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Create First Configuration
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// JSON validation for textarea fields
+document.addEventListener('DOMContentLoaded', function() {
+    const jsonTextareas = ['headers', 'pagination_params'];
+    
+    jsonTextareas.forEach(function(fieldId) {
+        const textarea = document.getElementById(fieldId);
+        if (textarea) {
+            textarea.addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value && value !== '') {
+                    try {
+                        JSON.parse(value);
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    } catch (e) {
+                        this.classList.remove('is-valid');
+                        this.classList.add('is-invalid');
+                    }
+                } else {
+                    this.classList.remove('is-invalid', 'is-valid');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

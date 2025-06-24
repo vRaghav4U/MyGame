@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}API Responses - API Pagination Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-database me-2"></i>
+            API Responses
+        </h1>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="config_id" class="form-label">Filter by Configuration</label>
+                        <select class="form-select" id="config_id" name="config_id">
+                            <option value="">All Configurations</option>
+                            {% for config in configs %}
+                                <option value="{{ config.id }}" 
+                                        {% if selected_config_id == config.id %}selected{% endif %}>
+                                    {{ config.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-filter me-1"></i>Filter
+                        </button>
+                        <a href="{{ url_for('main.responses') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    Response Data
+                    {% if responses.total %}
+                        <span class="badge bg-secondary">{{ responses.total }} total</span>
+                    {% endif %}
+                </h5>
+                <div class="d-flex gap-2">
+                    {% if selected_config_id %}
+                        <span class="badge bg-info">
+                            Filtered by: {{ configs|selectattr('id', 'equalto', selected_config_id)|first|attr('name') if configs|selectattr('id', 'equalto', selected_config_id)|list else 'Unknown' }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if responses.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Config</th>
+                                    <th>Page</th>
+                                    <th>Status</th>
+                                    <th>Response Time</th>
+                                    <th>Data Size</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for response in responses.items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ response.api_config.name if response.api_config else 'Unknown' }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ response.page_number }}</span>
+                                    </td>
+                                    <td>
+                                        {% if response.status_code == 200 %}
+                                            <span class="badge bg-success">{{ response.status_code }}</span>
+                                        {% elif response.status_code >= 400 %}
+                                            <span class="badge bg-danger">{{ response.status_code }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ response.status_code }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if response.response_time %}
+                                            <small>{{ "%.2f"|format(response.response_time) }}s</small>
+                                        {% else %}
+                                            <small class="text-muted">-</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if response.response_data %}
+                                            {% set data_size = response.response_data|length %}
+                                            {% if data_size > 1024 %}
+                                                <small>{{ "%.1f"|format(data_size / 1024) }} KB</small>
+                                            {% else %}
+                                                <small>{{ data_size }} B</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <small class="text-muted">No data</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ response.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-outline-info btn-sm" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#responseModal"
+                                                onclick="showResponseData({{ response.id }}, '{{ response.api_config.name if response.api_config else 'Unknown' }}', {{ response.page_number }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if response.error_message %}
+                                            <button class="btn btn-outline-warning btn-sm" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="{{ response.error_message }}">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if responses.pages > 1 %}
+                        <nav aria-label="Response pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if responses.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.responses', page=responses.prev_num, config_id=selected_config_id) }}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in responses.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != responses.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('main.responses', page=page_num, config_id=selected_config_id) }}">{{ page_num }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if responses.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.responses', page=responses.next_num, config_id=selected_config_id) }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-database fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No responses found</h4>
+                        {% if selected_config_id %}
+                            <p class="text-muted">No responses found for the selected configuration.</p>
+                        {% else %}
+                            <p class="text-muted">Start an API collection job to see response data here.</p>
+                        {% endif %}
+                        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Response Data Modal -->
+<div class="modal fade" id="responseModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="responseModalTitle">Response Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <span class="badge bg-primary" id="responseModalPage"></span>
+                        <span class="badge bg-secondary" id="responseModalConfig"></span>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="copyResponseData()">
+                        <i class="fas fa-copy me-1"></i>Copy
+                    </button>
+                </div>
+                <pre id="responseModalData" class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Response data cache
+const responseDataCache = {};
+
+function showResponseData(responseId, configName, pageNumber) {
+    document.getElementById('responseModalTitle').textContent = `Response Data - ${configName}`;
+    document.getElementById('responseModalConfig').textContent = configName;
+    document.getElementById('responseModalPage').textContent = `Page ${pageNumber}`;
+    
+    const dataElement = document.getElementById('responseModalData');
+    
+    if (responseDataCache[responseId]) {
+        dataElement.textContent = responseDataCache[responseId];
+    } else {
+        dataElement.textContent = 'Loading response data...';
+        
+        // In a real implementation, you would fetch the response data via AJAX
+        // For now, we'll show a placeholder
+        setTimeout(() => {
+            const placeholder = JSON.stringify({
+                "note": "Response data would be displayed here",
+                "response_id": responseId,
+                "config": configName,
+                "page": pageNumber,
+                "timestamp": new Date().toISOString()
+            }, null, 2);
+            
+            responseDataCache[responseId] = placeholder;
+            dataElement.textContent = placeholder;
+        }, 500);
+    }
+}
+
+function copyResponseData() {
+    const dataElement = document.getElementById('responseModalData');
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(dataElement.textContent).then(() => {
+            // Show success feedback
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-outline-secondary');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-secondary');
+            }, 2000);
+        });
+    }
+}
+</script>
+{% endblock %}
