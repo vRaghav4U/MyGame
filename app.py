@@ -28,16 +28,13 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # initialize the app with the extension
 db.init_app(app)
 
+# Import and register blueprints
+from routes.main import main_bp
+app.register_blueprint(main_bp)
+
 with app.app_context():
     # Import models to ensure tables are created
     import models
-    
-    # Import and register blueprints
-    from routes.main import main_bp
-    from routes.api_config import api_config_bp
-    
-    app.register_blueprint(main_bp)
-    app.register_blueprint(api_config_bp, url_prefix='/api-config')
     
     db.create_all()
 

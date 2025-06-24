@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RA Tic Tac Toe</title>
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     <style>
@@ -11,26 +11,28 @@
             background: linear-gradient(135deg, #FF6B35 0%, #F7931E 25%, #FFD23F 50%, #06FFA5 75%, #4ECDC4 100%);
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            overflow-x: hidden;
+            touch-action: manipulation;
         }
 
         .logo {
-            font-size: 3.5rem;
+            font-size: clamp(2rem, 8vw, 3.5rem);
             font-weight: 900;
             color: #fff;
             text-shadow: 
                 4px 4px 8px rgba(0,0,0,0.9),
                 0 0 20px rgba(255,255,255,0.5),
                 0 0 40px rgba(255,255,255,0.3);
-            margin-bottom: 25px;
-            letter-spacing: 8px;
+            margin-bottom: clamp(15px, 4vw, 25px);
+            letter-spacing: clamp(3px, 2vw, 8px);
             border: 4px solid #fff;
             border-radius: 20px;
-            padding: 15px 30px;
+            padding: clamp(10px, 3vw, 15px) clamp(15px, 5vw, 30px);
             box-shadow: 
                 0 8px 25px rgba(0,0,0,0.4),
                 inset 0 2px 0 rgba(255,255,255,0.3);
@@ -70,25 +72,25 @@
         }
 
         .challenge-text h2 {
-            font-size: 1.8rem;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
             font-weight: bold;
             margin-bottom: 10px;
             text-shadow: 
                 3px 3px 6px rgba(0,0,0,0.8),
                 0 0 15px rgba(255,255,255,0.4);
             background: rgba(255,255,255,0.1);
-            padding: 12px 20px;
+            padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px);
             border-radius: 15px;
             border: 2px solid rgba(255,255,255,0.3);
             animation: pulse 2s infinite;
         }
 
         .challenge-text p {
-            font-size: 1.1rem;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
             font-weight: 600;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
             background: rgba(0,0,0,0.3);
-            padding: 8px 15px;
+            padding: clamp(6px, 2vw, 8px) clamp(10px, 3vw, 15px);
             border-radius: 10px;
             display: inline-block;
         }
@@ -100,18 +102,18 @@
 
         .raghav-avatar {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 120px;
-            height: 120px;
+            top: clamp(10px, 2vw, 20px);
+            right: clamp(10px, 2vw, 20px);
+            width: clamp(80px, 15vw, 120px);
+            height: clamp(80px, 15vw, 120px);
             border-radius: 50%;
             background: linear-gradient(135deg, #4ECDC4, #06FFA5);
-            border: 4px solid #fff;
+            border: clamp(2px, 1vw, 4px) solid #fff;
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
             display: none;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            font-size: clamp(2rem, 5vw, 3rem);
             z-index: 100;
             animation: avatarBounce 0.5s ease-in-out;
             background-image: url('/static/images/raghav.png');
@@ -294,24 +296,24 @@
         }
 
         .score-label {
-            font-size: 1rem;
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
             font-weight: 600;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
             background: rgba(0,0,0,0.3);
-            padding: 3px 8px;
+            padding: 3px 6px;
             border-radius: 8px;
             margin-bottom: 5px;
             display: inline-block;
         }
 
         .score-value {
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             font-weight: 900;
             text-shadow: 
                 3px 3px 6px rgba(0,0,0,0.8),
                 0 0 15px rgba(255,255,255,0.4);
             background: rgba(255,255,255,0.2);
-            padding: 5px 12px;
+            padding: 5px 8px;
             border-radius: 12px;
             border: 2px solid rgba(255,255,255,0.3);
         }
@@ -415,7 +417,7 @@
     
     <div class="challenge-text">
         <h2>🎯 Think You Can Beat Raghav? 🎯</h2>
-        <p>Challenge the AI and prove your tic-tac-toe skills!</p>
+
     </div>
     
     <div class="game-container">
@@ -655,7 +657,7 @@
                     // Show Raghav with sad/disappointed expression when user wins
                     this.showRaghavsAvatar('thinking', 'Well played! 😔');
                 } else if (message.includes('Player O Wins')) {
-                    gameResult.textContent = '🤖 Raghav Wins! Try Again? 🤖';
+                    gameResult.textContent = '👱🏻‍♂️ Raghav Wins! Try Again? 👱🏻‍♂️';
                     const randomWinMessage = this.winningMessages[Math.floor(Math.random() * this.winningMessages.length)];
                     this.showRaghavsAvatar('winning', randomWinMessage);
                 } else {
